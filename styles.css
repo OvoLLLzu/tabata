@@ -27,9 +27,10 @@ body{
 
 .app{
 	min-height: 100dvh;
+	min-height: calc(var(--vh, 1vh) * 100);
 	display: grid;
 	grid-template-rows: auto 1fr auto;
-	padding: 16px;
+	padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
 }
 
 .header{ text-align: center; padding: 8px 0 4px; }
@@ -80,6 +81,7 @@ body{
 
 .footer{ display: grid; place-items: center; gap: 8px; padding: 8px 0 4px; }
 .controls{ display: flex; gap: 12px; }
+.controls.hidden{ display: none; }
 .btn{
 	appearance: none;
 	border: 1px solid var(--btn-border);
@@ -126,4 +128,3 @@ body{ animation: breathe 10s ease-in-out infinite; }
 	.title{ font-size: 20px; }
 	.timer{ font-size: 56px; }
 }
-

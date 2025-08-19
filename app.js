@@ -2,6 +2,9 @@
 (function(){
 	'use strict';
 
+	let tg = null;
+	let isTelegram = false;
+
 	const AppState = {
 		Initial: 'initial',
 		Prepare: 'prepare',
@@ -22,6 +25,8 @@
 		restartBtn: document.getElementById('restartBtn'),
 		overallFill: document.getElementById('overallFill'),
 		ringProgress: document.querySelector('.ring-progress'),
+		controls: document.querySelector('.controls'),
+		hint: document.querySelector('.hint'),
 	};
 
 	const ringCircumference = 2 * Math.PI * 98; // r=98
@@ -35,6 +40,7 @@
 	// Audio
 	const audio = createAudio();
 
+	setupViewportUnits();
 	setupTelegram();
 	initUI();
 	wireEvents();
@@ -42,12 +48,57 @@
 	function setupTelegram(){
 		try {
 			if (window.Telegram && window.Telegram.WebApp) {
-				const tg = window.Telegram.WebApp;
+				tg = window.Telegram.WebApp;
+				isTelegram = true;
 				tg.expand();
 				tg.ready();
-				document.body.style.backgroundColor = tg.themeParams.bg_color || getComputedStyle(document.documentElement).getPropertyValue('--bg');
+				applyTelegramTheme(tg.themeParams);
+				tg.onEvent('themeChanged', () => applyTelegramTheme(tg.themeParams));
+				// Use Telegram MainButton instead of in-page controls
+				if (elements.controls) elements.controls.classList.add('hidden');
+				if (elements.hint) elements.hint.style.display = 'none';
+				setupMainButton();
 			}
 		} catch (e) {}
+	}
+
+	function setupViewportUnits(){
+		const setVh = () => {
+			const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
+			document.documentElement.style.setProperty('--vh', `${vh}px`);
+		};
+		setVh();
+		window.addEventListener('resize', setVh);
+		window.addEventListener('orientationchange', setVh);
+		if (window.visualViewport) window.visualViewport.addEventListener('resize', setVh);
+	}
+
+	function applyTelegramTheme(theme){
+		try{
+			if (!theme) return;
+			const root = document.documentElement;
+			if (theme.bg_color) {
+				root.style.setProperty('--bg', theme.bg_color);
+				document.body.style.backgroundColor = theme.bg_color;
+			}
+			if (theme.text_color) root.style.setProperty('--text', theme.text_color);
+			if (theme.hint_color) root.style.setProperty('--muted', theme.hint_color);
+		} catch(e){}
+	}
+
+	function setupMainButton(){
+		if (!isTelegram || !tg) return;
+		tg.MainButton.setParams({ text: 'Старт', is_active: true, is_visible: true });
+		try { tg.offEvent && tg.offEvent('mainButtonClicked'); } catch(_) {}
+		tg.onEvent('mainButtonClicked', () => {
+			tg.HapticFeedback && tg.HapticFeedback.impactOccurred('medium');
+			if (state === AppState.Complete){
+				resetWorkout();
+			}
+			if (state === AppState.Initial || state === AppState.Complete){
+				startWorkout();
+			}
+		});
 	}
 
 	function initUI(){
@@ -110,6 +161,7 @@
 		currentStepIndex = -1;
 		elements.startBtn.hidden = true;
 		elements.restartBtn.hidden = true;
+		if (isTelegram && tg){ tg.MainButton.hide(); }
 		advanceStep();
 	}
 
@@ -120,6 +172,7 @@
 		updateTexts('Готовы начать?', 'Нажмите Старт', '');
 		setState(AppState.Initial);
 		currentStepIndex = -1;
+		if (isTelegram && tg){ tg.MainButton.setText('Старт'); tg.MainButton.show(); }
 	}
 
 	function advanceStep(){
@@ -265,6 +318,7 @@
 		updateTexts('Завершение', 'Тренировка завершена. Отличная работа!', 'Нажмите «Заново», чтобы начать снова');
 		elements.restartBtn.hidden = false;
 		audio.beepLong();
+		if (isTelegram && tg){ tg.MainButton.setText('Заново'); tg.MainButton.show(); }
 	}
 
 	function handleVisibilityChange(){
