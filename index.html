@@ -3,165 +3,318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Таймер Табата</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Табата-Тренировка</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-
+        /* Основные стили: минималистичный дизайн с темной темой */
         body {
-            font-family: 'Inter', sans-serif;
-            background: #111827;
-            color: #E5E7EB;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #121212; /* Темный фон */
+            color: #ffffff;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.5s ease; /* Плавный переход фона */
+        }
+
+        #app {
             text-align: center;
-            padding: 1rem;
+            max-width: 100%;
+            padding: 20px;
             box-sizing: border-box;
         }
 
-        .container {
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+        #timer {
+            font-size: 10rem; /* Крупный таймер */
+            margin: 20px 0;
+            transition: color 0.5s ease, transform 0.2s ease; /* Анимация цвета и масштаба */
         }
 
-        .timer-display {
+        #instruction {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards; /* Анимация появления текста */
+        }
+
+        #next-info {
+            font-size: 1.2rem;
+            color: #aaaaaa; /* Серый для следующего упражнения */
+            margin-top: 10px;
+        }
+
+        #progress {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
             position: relative;
-            width: 100%;
-            padding-bottom: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
-        .timer-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
+        #progress-circle {
+            stroke-dasharray: 565; /* Общая длина окружности (2 * π * 90) */
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear; /* Плавное обновление прогресса */
         }
 
-        .timer-circle {
-            stroke: #374151;
-            fill: transparent;
-            stroke-width: 10;
-        }
-
-        .timer-progress {
-            stroke-dasharray: 628;
-            stroke-dashoffset: 628;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 1s linear;
-        }
-
-        #timer-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 5rem;
-            font-weight: 700;
-        }
-
-        .info-section {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        #exercise-name {
-            font-size: 2.25rem;
-            font-weight: 700;
-            color: #F9FAFB;
-        }
-
-        #status-text {
+        #start-btn, #restart-btn {
+            background-color: #ff5722; /* Яркий оранжевый акцент */
+            color: #ffffff;
+            border: none;
+            padding: 15px 30px;
             font-size: 1.5rem;
-            color: #9CA3AF;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: transform 0.2s ease, background-color 0.3s ease; /* Анимация нажатия */
         }
 
-        .control-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
+        #start-btn:hover, #restart-btn:hover {
+            background-color: #e64a19;
         }
 
-        .control-button {
-            padding: 1rem 2rem;
-            font-size: 1.25rem;
-            font-weight: 700;
-            border-radius: 9999px;
-            transition: transform 0.1s ease-in-out, background-color 0.2s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        #start-btn:active, #restart-btn:active {
+            transform: scale(0.95); /* Масштаб при нажатии */
         }
 
-        .control-button:active {
-            transform: scale(0.95);
+        .hidden {
+            display: none;
         }
 
-        .pulse-animation {
-            animation: pulse 1s infinite;
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
-        /* Color classes for different states */
-        .color-prepare { stroke: #FBBF24; color: #FBBF24; }
-        .color-exercise { stroke: #10B981; color: #10B981; }
-        .color-rest { stroke: #60A5FA; color: #60A5FA; }
-        .color-long-rest { stroke: #F472B6; color: #F472B6; }
-        .color-shavasana { stroke: #A78BFA; color: #A78BFA; }
-        .bg-start { background-color: #10B981; color: #F9FAFB; }
-        .bg-reset { background-color: #EF4444; color: #F9FAFB; }
+        /* Состояния */
+        .exercise {
+            color: #4caf50; /* Зеленый для упражнения */
+            animation: pulse 1s infinite; /* Пульсация во время упражнения */
+        }
+
+        .rest {
+            color: #2196f3; /* Синий для отдыха */
+        }
+
+        .prep {
+            color: #ffeb3b; /* Желтый для подготовки */
+        }
+
+        .complete {
+            color: #ffffff;
+            font-size: 2rem;
+        }
+
+        /* Адаптация под мобильные устройства */
+        @media (max-width: 600px) {
+            #timer {
+                font-size: 8rem;
+            }
+            #instruction {
+                font-size: 1.5rem;
+            }
+            #start-btn, #restart-btn {
+                font-size: 1.2rem;
+                padding: 10px 20px;
+            }
+            #progress {
+                width: 150px;
+                height: 150px;
+            }
+            #progress-circle {
+                stroke-dasharray: 440; /* Корректировка для меньшего размера */
+            }
+        }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <div class="info-section">
-        <div id="status-text" class="uppercase">Начало тренировки</div>
-        <div id="exercise-name">Готовы?</div>
-    </div>
-    <div class="timer-display">
-        <svg class="timer-svg" viewBox="0 0 200 200">
-            <circle class="timer-circle" cx="100" cy="100" r="95"></circle>
-            <circle id="progress-circle" class="timer-progress" cx="100" cy="100" r="95"></circle>
+    <div id="app">
+        <div id="instruction">Добро пожаловать в Табата-Тренировку!</div>
+        <div id="timer">00:00</div>
+        <div id="next-info"></div>
+        <svg id="progress" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="90" stroke="#333" stroke-width="10" fill="none" />
+            <circle id="progress-circle" cx="100" cy="100" r="90" stroke="#ff5722" stroke-width="10" fill="none" transform="rotate(-90 100 100)" />
         </svg>
-        <span id="timer-text">--</span>
+        <button id="start-btn">Старт</button>
+        <button id="restart-btn" class="hidden">Заново</button>
     </div>
 
-    <div class="control-buttons">
-        <button id="startButton" class="control-button bg-start">Начать</button>
-        <button id="resetButton" class="control-button bg-reset hidden">Сброс</button>
-    </div>
-</div>
+    <audio id="short-beep" src="data:audio/mp3;base64,//MUXEXYZggAAAA8AAAACAAADgQAAAAAAAACAAAAAAAAAAQAAAAAAAABAAAAAAAAAAAAAAA=="></audio> <!-- Короткий сигнал (заменить на реальный файл если нужно) -->
+    <audio id="long-beep" src="data:audio/mp3;base64,//MUXEXYZggAAAA8AAAACAAADgQAAAAAAAACAAAAAAAAAAQAAAAAAAABAAAAAAAAAAAAAAA=="></audio> <!-- Долгий сигнал (заменить на реальный файл если нужно) -->
 
-<script>
-    // --- UI Elements ---
-    const startButton = document.getElementById('startButton');
-    const resetButton = document.getElementById('resetButton');
-    const timerText = document.getElementById('timer-text');
-    const statusText = document.getElementById('status-text');
-    const exerciseName = document.getElementById('exercise-name');
-    const progressCircle = document.getElementById('progress-circle');
+    <script>
+        // Основная логика приложения
 
-    // --- State Variables ---
-    let timerInterval = null;
-    let totalTime = 0;
-    let currentTime = 0;
-    let currentPhaseIndex = 0;
-    let isRunning = false;
-    let initialOffset = 628; // Circumference of a circle with r=95 * 2 * PI
-    
-    // --- Audio Cues ---
-    const beepSound = new Audio("data:audio/wav;base64,UklGRl9yX1gBQABYIQAAVyBsZ3c/d3w5fT9/dXh6dnh6enl3d3x8d3l6eXp6d3h4d3x7enl5d3h4enl6eXh5d3h7dnh5d3p4d3p6e3l6eXp5e3p7dnh7e3p5dnp4dnl3eHl5e3l7eHh4e3t4enp5ent6e3l4e3p3e3p2e3p7eHp7e3p7eHp7eHp6e3l6e3p6e3p6eHp6e3p5e3p4e3l6ent7eHp6eHp6e3p5e3p4e3p5ent6eHp5e3p5e3p4e3p5ent7ent5e3p5e3p5e3p5e3p5eHp4e3p3e3p3e3p4e3l4e3p4e3p4eHp5eHp5eHp5eHp5eHp4eHp5eHp6eHp6eHp6e3p6e3p6e3p6eHp6eHp6e3p6eHp6e3p6eHp5e3p5e3p5eHp6eHp6eHp6eHp6eHp5e3p5eHp5eHp5eHp5eHp6e3p6e3p6e3p6e3p6eHp6e3p6eHp6eHp5e3p5eHp5eHp6eHp6eHp6eHp6eHp5e3p5eHp5eHp5eHp5eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6e3p6eHp5e3p5eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp5eHp5eHp5eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHp6eHpvb3j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d3d2j2f93d3d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2f93d3d3d3d3d3d2j2
+        // Константы для звуков
+        const shortBeep = document.getElementById('short-beep');
+        const longBeep = document.getElementById('long-beep');
+
+        // Элементы DOM
+        const instruction = document.getElementById('instruction');
+        const timerDisplay = document.getElementById('timer');
+        const nextInfo = document.getElementById('next-info');
+        const progressCircle = document.getElementById('progress-circle');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const body = document.body;
+
+        // Состояния тренировки
+        let currentPhase = 'prep'; // prep, exercise, rest, long_rest, shavasana, complete
+        let currentBlock = 0; // 0: Прыжки, 1: Присед, 2: Бёрпи
+        let currentSet = 1; // 1-4 подхода
+        let timeLeft = 0;
+        let intervalId = null;
+        let totalDuration = 0; // Для прогресса
+        let isRunning = false;
+
+        // Структура тренировки
+        const blocks = [
+            { name: 'Прыжки', sets: 4 },
+            { name: 'Присед', sets: 4 },
+            { name: 'Бёрпи', sets: 4 }
+        ];
+
+        const prepTime = 20;
+        const exerciseTime = 20;
+        const shortRestTime = 10;
+        const longRestTime = 40;
+        const shavasanaTime = 180;
+
+        // Функция форматирования времени
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Обновление дисплея
+        function updateDisplay() {
+            timerDisplay.textContent = formatTime(timeLeft);
+
+            // Обновление прогресса (stroke-dashoffset от 0 до полной длины)
+            const circumference = 2 * Math.PI * 90; // Для r=90
+            const offset = circumference * (1 - (timeLeft / totalDuration));
+            progressCircle.style.strokeDashoffset = offset;
+
+            // Изменение стилей в зависимости от фазы
+            timerDisplay.classList.remove('exercise', 'rest', 'prep', 'complete');
+            if (currentPhase === 'exercise') {
+                timerDisplay.classList.add('exercise');
+                body.style.backgroundColor = '#1e1e1e'; // Динамичный фон
+                instruction.textContent = blocks[currentBlock].name;
+                nextInfo.textContent = `Подход ${currentSet}/4`;
+            } else if (currentPhase === 'rest' || currentPhase === 'long_rest') {
+                timerDisplay.classList.add('rest');
+                body.style.backgroundColor = '#121212'; // Спокойный фон
+                instruction.textContent = 'Отдых';
+                nextInfo.textContent = `Следующее: ${blocks[currentBlock].name} (${currentSet}/4)`;
+            } else if (currentPhase === 'prep') {
+                timerDisplay.classList.add('prep');
+                instruction.textContent = 'Подготовка';
+                nextInfo.textContent = 'Готовьтесь к Прыжкам';
+            } else if (currentPhase === 'shavasana') {
+                timerDisplay.classList.add('rest');
+                instruction.textContent = 'Шавасана';
+                nextInfo.textContent = 'Расслабьтесь';
+            } else if (currentPhase === 'complete') {
+                timerDisplay.classList.add('complete');
+                instruction.textContent = 'Тренировка завершена. Отличная работа!';
+                nextInfo.textContent = '';
+                restartBtn.classList.remove('hidden');
+                startBtn.classList.add('hidden');
+            }
+        }
+
+        // Запуск таймера
+        function startTimer(duration) {
+            totalDuration = duration;
+            timeLeft = duration;
+            updateDisplay();
+            shortBeep.play(); // Сигнал начала
+
+            intervalId = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(intervalId);
+                    shortBeep.play(); // Сигнал конца
+                    nextPhase();
+                }
+            }, 1000);
+        }
+
+        // Переход к следующей фазе
+        function nextPhase() {
+            if (currentPhase === 'prep') {
+                currentPhase = 'exercise';
+                startTimer(exerciseTime);
+            } else if (currentPhase === 'exercise') {
+                if (currentSet < blocks[currentBlock].sets) {
+                    currentPhase = 'rest';
+                    currentSet++;
+                    startTimer(shortRestTime);
+                } else {
+                    currentPhase = 'long_rest';
+                    startTimer(longRestTime);
+                }
+            } else if (currentPhase === 'rest') {
+                currentPhase = 'exercise';
+                startTimer(exerciseTime);
+            } else if (currentPhase === 'long_rest') {
+                currentSet = 1;
+                currentBlock++;
+                if (currentBlock < blocks.length) {
+                    currentPhase = 'exercise';
+                    startTimer(exerciseTime);
+                } else {
+                    currentPhase = 'shavasana';
+                    startTimer(shavasanaTime);
+                }
+            } else if (currentPhase === 'shavasana') {
+                currentPhase = 'complete';
+                longBeep.play(); // Долгий сигнал конца
+                updateDisplay();
+            }
+        }
+
+        // Старт тренировки
+        startBtn.addEventListener('click', () => {
+            if (!isRunning) {
+                isRunning = true;
+                startBtn.textContent = 'Пауза'; // Можно добавить паузу, но по запросу не требуется
+                currentPhase = 'prep';
+                currentBlock = 0;
+                currentSet = 1;
+                startTimer(prepTime);
+            }
+        });
+
+        // Перезапуск
+        restartBtn.addEventListener('click', () => {
+            isRunning = false;
+            clearInterval(intervalId);
+            restartBtn.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+            startBtn.textContent = 'Старт';
+            instruction.textContent = 'Добро пожаловать в Табата-Тренировку!';
+            timerDisplay.textContent = '00:00';
+            nextInfo.textContent = '';
+            progressCircle.style.strokeDashoffset = 0;
+            body.style.backgroundColor = '#121212';
+        });
+
+        // Примечание: Для реальных звуков замените data:audio на пути к файлам, например, 'short-beep.mp3'
+        // Это приложение адаптировано для мобильных: responsive шрифты, viewport meta.
+    </script>
+</body>
+</html>
