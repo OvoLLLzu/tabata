@@ -1,62 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="theme-color" content="#0b1220" />
-		<title>Tabata Coach • Telegram WebApp</title>
-		<link rel="preconnect" href="https://telegram.org" />
-		<link rel="stylesheet" href="./styles.css" />
-		<script src="https://telegram.org/js/telegram-web-app.js"></script>
-	</head>
-	<body>
-		<div id="app" class="app state-initial">
-			<header class="header">
-				<div class="title">Tabata Coach</div>
-				<div class="subtitle">Интерактивный таймер для табата-тренировки</div>
-			</header>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Сердечко для тебя</title>
+    <meta name="description" content="Раз уж ты так далеко зашел, отправь мне сердечко ❤️">
+    <meta name="theme-color" content="#ff2d75">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="grain"></div>
+    </div>
 
-			<main class="main">
-				<div class="stage" id="stageText">Готовы начать?</div>
+    <main class="hero">
+      <h1 class="title">Раз уж ты так далеко зашел, отправь мне сердечко</h1>
 
-				<div class="timer-wrapper" aria-live="polite">
-					<svg class="ring" viewBox="0 0 220 220">
-						<defs>
-							<linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-								<stop offset="0%" stop-color="var(--accent-1)" />
-								<stop offset="100%" stop-color="var(--accent-2)" />
-							</linearGradient>
-						</defs>
-						<circle class="ring-track" cx="110" cy="110" r="98" />
-						<circle class="ring-progress" cx="110" cy="110" r="98" />
-					</svg>
-					<div class="timer" id="timerText">00:20</div>
-				</div>
+      <a class="heart-cta" href="https://t.me/ovolll" target="_blank" rel="noopener noreferrer" aria-label="Открыть Telegram: @ovolll">
+        <svg class="heart-icon" viewBox="0 0 512 512" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff2d75" />
+              <stop offset="50%" stop-color="#ff7a59" />
+              <stop offset="100%" stop-color="#ffd166" />
+            </linearGradient>
+          </defs>
+          <path fill="url(#heartGradient)" d="M462.3 62.6c-54.5-46.4-136-38.3-186.4 13.7L256 96l-19.9-19.8C185.7 24.3 104.2 16.2 49.7 62.6-16.6 120.1-10.6 221.3 43 278.6l175.3 178.7c9.6 9.8 25.1 9.8 34.7 0L469 278.6c53.6-57.3 59.6-158.5-6.7-216z"/>
+        </svg>
+        <span class="sr-only">Открыть Telegram: @ovolll</span>
+      </a>
+    </main>
 
-				<div class="exercise">
-					<div class="exercise-current" id="exerciseName">Нажмите Старт</div>
-					<div class="exercise-next" id="nextName"></div>
-				</div>
-
-				<div class="overall">
-					<div class="overall-label">Общий прогресс</div>
-					<div class="overall-bar">
-						<div class="overall-fill" id="overallFill"></div>
-					</div>
-				</div>
-			</main>
-
-			<footer class="footer">
-				<div class="controls">
-					<button id="startBtn" class="btn btn-primary">Старт</button>
-					<button id="restartBtn" class="btn btn-secondary" hidden>Заново</button>
-				</div>
-				<div class="hint">Звуки включаются при первом нажатии. Для Telegram: откройте как WebApp.</div>
-			</footer>
-		</div>
-
-		<script src="./app.js" defer></script>
-	</body>
+    <script src="./script.js" defer></script>
+  </body>
 </html>
 
 
